@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: mcbairan
+    runtime: node
+    plan: free
+    buildCommand: |
+      npm install
+      pip install rembg --break-system-packages
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    disk:
+      name: mcbairan-storage
+      mountPath: /opt/render/project/src/public/results
+      sizeGB: 1

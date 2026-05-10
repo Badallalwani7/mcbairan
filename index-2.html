@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>McBairan — Make the Effect</title>
+<meta name="description" content="Drop your video. Get the freeze-frame sticker effect. Free. Made by Badal.">
+<meta property="og:title" content="McBairan — Make the Effect">
+<meta property="og:description" content="Freeze frame + background removal + sticker overlay. The viral video effect, free.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Manrope:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #080808;
+  --white: #f5f2eb;
+  --yellow: #f5d000;
+  --red: #e8230a;
+  --grey: #1a1a1a;
+  --border: #2a2a2a;
+  --muted: #555;
+  --green: #00c97a;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: 'Manrope', sans-serif;
+  min-height: 100vh;
+  cursor: default;
+}
+
+/* ── Scanline overlay ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── Nav ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,8,8,0.92);
+  backdrop-filter: blur(12px);
+}
+
+.nav-logo {
+  font-family: 'Black Ops One', cursive;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--yellow);
+  text-decoration: none;
+}
+
+.nav-logo span { color: var(--white); }
+
+.nav-by {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.nav-by a { color: var(--yellow); text-decoration: none; }
+
+/* ── Hero ── */
+.hero {
+  padding: 140px 32px 80px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.hero-kicker {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--yellow);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-kicker::before {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: var(--yellow);
+}
+
+.hero h1 {
+  font-family: 'Black Ops One', cursive;
+  font-size: clamp(64px, 10vw, 128px);
+  line-height: 0.88;
+  letter-spacing: -1px;
+  color: var(--white);
+  margin-bottom: 32px;
+}
+
+.hero h1 .accent { color: var(--yellow); display: block; }
+.hero h1 .red { color: var(--red); }
+
+.hero-sub {
+  font-size: 16px;
+  font-weight: 300;
+  color: var(--muted);
+  max-width: 480px;
+  line-height: 1.7;
+  margin-bottom: 40px;
+}
+
+.hero-sub strong { color: var(--white); font-weight: 600; }
+
+/* Pipeline strip */
+.pipeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin-bottom: 56px;
+}
+
+.pipe-node {
+  background: var(--grey);
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.pipe-node.highlight { border-color: var(--yellow); color: var(--yellow); background: rgba(245,208,0,0.06); }
+.pipe-node.end { border-color: var(--green); color: var(--green); background: rgba(0,201,122,0.06); }
+
+.pipe-sep {
+  width: 24px;
+  height: 1px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.cta-scroll {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Black Ops One', cursive;
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: var(--black);
+  background: var(--yellow);
+  padding: 16px 32px;
+  text-decoration: none;
+  transition: all 0.15s;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+}
+
+.cta-scroll:hover { background: #ffe033; transform: translateY(-1px); }
+
+/* ── Section divider ── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0;
+}
+
+/* ── App Section ── */
+#app {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 72px 32px 80px;
+}
+
+.section-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--yellow);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: 'Black Ops One', cursive;
+  font-size: 36px;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.section-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+/* Server config bar */
+.server-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--grey);
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.server-bar label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.server-bar input {
+  flex: 1;
+  min-width: 200px;
+  background: transparent;
+  border: none;
+  color: var(--white);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  outline: none;
+  padding: 2px 0;
+}
+
+.server-bar input::placeholder { color: var(--muted); }
+
+#server-status {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+#server-status.ok { border-color: rgba(0,201,122,0.4); color: var(--green); background: rgba(0,201,122,0.06); }
+#server-status.err { border-color: rgba(232,35,10,0.4); color: var(--red); }
+
+/* Upload cards */
+.upload-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 600px) { .upload-grid { grid-template-columns: 1fr; } }
+
+.upload-card {
+  border: 1px solid var(--border);
+  background: var(--grey);
+  overflow: hidden;
+}
+
+.upload-card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.upload-card-num {
+  font-family: 'Black Ops One', cursive;
+  font-size: 13px;
+  color: var(--yellow);
+  letter-spacing: 1px;
+}
+
+.upload-card-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.drop-zone {
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s;
+}
+
+.drop-zone:hover, .drop-zone.over { background: rgba(245,208,0,0.04); }
+.drop-zone.has-file { background: rgba(0,201,122,0.04); }
+
+.drop-zone input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.drop-icon { font-size: 28px; margin-bottom: 10px; }
+
+.drop-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.drop-label strong { color: var(--white); display: block; margin-bottom: 2px; font-size: 12px; }
+
+.file-tag {
+  margin-top: 10px;
+  display: inline-block;
+  background: rgba(0,201,122,0.12);
+  border: 1px solid rgba(0,201,122,0.3);
+  color: var(--green);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  padding: 3px 8px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: none;
+}
+
+.file-tag.show { display: inline-block; }
+
+.img-thumbs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 0 18px 14px;
+}
+
+.img-thumb {
+  width: 36px;
+  height: 52px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  opacity: 0.8;
+}
+
+.img-count {
+  width: 36px;
+  height: 52px;
+  background: var(--black);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+}
+
+/* Generate button */
+.gen-btn {
+  width: 100%;
+  padding: 22px;
+  background: var(--yellow);
+  color: var(--black);
+  border: none;
+  font-family: 'Black Ops One', cursive;
+  font-size: 24px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+  margin-top: 4px;
+}
+
+.gen-btn:hover { background: #ffe033; }
+.gen-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; clip-path: none; }
+
+/* ── Progress ── */
+#progress-wrap { display: none; margin-top: 32px; }
+#progress-wrap.show { display: block; }
+
+.prog-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.prog-pct {
+  font-family: 'Black Ops One', cursive;
+  font-size: 56px;
+  color: var(--white);
+  line-height: 1;
+}
+
+.prog-badge {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  padding: 5px 12px;
+  letter-spacing: 1px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.prog-badge.processing { border-color: rgba(245,208,0,0.4); color: var(--yellow); background: rgba(245,208,0,0.06); }
+.prog-badge.done { border-color: rgba(0,201,122,0.4); color: var(--green); background: rgba(0,201,122,0.06); }
+.prog-badge.error { border-color: rgba(232,35,10,0.4); color: var(--red); }
+
+.prog-step-name {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.prog-track {
+  height: 3px;
+  background: var(--border);
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.prog-fill {
+  height: 100%;
+  background: var(--yellow);
+  transition: width 0.5s ease;
+  position: relative;
+}
+
+.prog-fill.done { background: var(--green); }
+
+/* Shimmer on fill */
+.prog-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 1.5s ease infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Steps */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 500px) { .steps { grid-template-columns: 1fr 1fr; } }
+
+.step-pill {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.step-pill .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.step-pill.active { border-color: rgba(245,208,0,0.3); color: var(--yellow); }
+.step-pill.active .dot { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+.step-pill.done { border-color: rgba(0,201,122,0.2); color: #3a8a5a; }
+.step-pill.done .dot { background: var(--green); }
+
+/* Log */
+.log-box {
+  background: #050505;
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  height: 140px;
+  overflow-y: auto;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  line-height: 2;
+  color: var(--muted);
+}
+
+.log-line.ok { color: var(--green); }
+.log-line.warn { color: var(--yellow); }
+.log-line.err { color: var(--red); }
+
+/* ── Result ── */
+#result-wrap { display: none; margin-top: 24px; }
+#result-wrap.show { display: block; }
+
+.result-box {
+  border: 2px solid var(--green);
+  padding: 32px;
+  text-align: center;
+  background: rgba(0,201,122,0.03);
+}
+
+.result-title {
+  font-family: 'Black Ops One', cursive;
+  font-size: 32px;
+  color: var(--green);
+  letter-spacing: 3px;
+  margin-bottom: 6px;
+}
+
+.result-sub {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  margin-bottom: 20px;
+}
+
+#result-video {
+  width: 100%;
+  max-width: 300px;
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.result-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+.dl-btn {
+  display: inline-block;
+  padding: 14px 36px;
+  background: var(--green);
+  color: var(--black);
+  font-family: 'Black Ops One', cursive;
+  font-size: 18px;
+  letter-spacing: 2px;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.dl-btn:hover { background: #00f593; }
+
+.reset-btn {
+  padding: 14px 28px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  font-family: 'Black Ops One', cursive;
+  font-size: 16px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.reset-btn:hover { color: var(--white); border-color: var(--white); }
+
+/* ── Footer ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 32px;
+  text-align: center;
+}
+
+.footer-name {
+  font-family: 'Black Ops One', cursive;
+  font-size: 14px;
+  letter-spacing: 3px;
+  color: var(--yellow);
+  margin-bottom: 6px;
+}
+
+.footer-links {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.footer-links a { color: var(--muted); text-decoration: none; }
+.footer-links a:hover { color: var(--white); }
+
+/* Entrance animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero-kicker { animation: fadeUp 0.5s ease both; }
+.hero h1     { animation: fadeUp 0.5s 0.1s ease both; }
+.hero-sub    { animation: fadeUp 0.5s 0.2s ease both; }
+.pipeline    { animation: fadeUp 0.5s 0.3s ease both; }
+.cta-scroll  { animation: fadeUp 0.5s 0.4s ease both; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#"><span>Mc</span>BAIRAN</a>
+  <div class="nav-by">by <a href="https://instagram.com/deep.build" target="_blank">@deep.build</a></div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-kicker">Free Video Effect Tool</div>
+  <h1>
+    FREEZE.
+    <span class="accent">REVEAL.</span>
+    GO <span class="red">VIRAL.</span>
+  </h1>
+  <p class="hero-sub">
+    The <strong>Bairaneffect</strong> — freeze your last frame, wipe in a slideshow from the center, float your cutout on top. Built this for myself. Now it's yours. <strong>Free.</strong>
+  </p>
+  <div class="pipeline">
+    <div class="pipe-node highlight">YOUR VIDEO</div>
+    <div class="pipe-sep"></div>
+    <div class="pipe-node">FREEZE FRAME</div>
+    <div class="pipe-sep"></div>
+    <div class="pipe-node">AI CUTOUT</div>
+    <div class="pipe-sep"></div>
+    <div class="pipe-node">CENTER WIPE</div>
+    <div class="pipe-sep"></div>
+    <div class="pipe-node end">🔥 DONE</div>
+  </div>
+  <a href="#app" class="cta-scroll">MAKE IT ↓</a>
+</section>
+
+<hr class="divider">
+
+<!-- App -->
+<section id="app">
+  <div class="section-label">The Tool</div>
+  <h2 class="section-title">DROP YOUR VIDEO</h2>
+  <p class="section-sub">Upload your main video + some images for the reveal slideshow. The AI removes your background automatically, then composes the final effect.</p>
+
+  <!-- Server URL bar -->
+  <div class="server-bar">
+    <label>BACKEND URL</label>
+    <input type="text" id="server-url" placeholder="https://your-mcbairan.onrender.com" />
+    <div id="server-status">NOT CONNECTED</div>
+    <button onclick="pingServer()" style="background:none;border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;padding:4px 10px;cursor:pointer;letter-spacing:1px;">PING</button>
+  </div>
+
+  <!-- Upload cards -->
+  <div class="upload-grid">
+    <div class="upload-card">
+      <div class="upload-card-header">
+        <span class="upload-card-num">01</span>
+        <span class="upload-card-title">MAIN VIDEO</span>
+      </div>
+      <div class="drop-zone" id="video-drop">
+        <input type="file" id="video-input" accept=".mp4,.mov,.avi,video/*">
+        <div class="drop-icon">🎬</div>
+        <div class="drop-label">
+          <strong>Drop video here</strong>
+          MP4 · MOV · AVI
+        </div>
+        <div class="file-tag" id="video-tag"></div>
+      </div>
+    </div>
+
+    <div class="upload-card">
+      <div class="upload-card-header">
+        <span class="upload-card-num">02</span>
+        <span class="upload-card-title">SLIDESHOW IMAGES <span style="color:var(--muted);font-size:9px;">(OPTIONAL)</span></span>
+      </div>
+      <div class="drop-zone" id="images-drop">
+        <input type="file" id="images-input" accept="image/*" multiple>
+        <div class="drop-icon">🖼️</div>
+        <div class="drop-label">
+          <strong>Drop images here</strong>
+          Multiple OK · JPG PNG HEIC
+        </div>
+        <div class="file-tag" id="images-tag"></div>
+      </div>
+      <div class="img-thumbs" id="img-thumbs"></div>
+    </div>
+  </div>
+
+  <button class="gen-btn" id="gen-btn" disabled onclick="startJob()">
+    MAKE THE MCBAIRAN EFFECT
+  </button>
+
+  <!-- Progress -->
+  <div id="progress-wrap">
+    <div class="prog-header">
+      <div class="prog-pct" id="prog-pct">0%</div>
+      <div class="prog-badge processing" id="prog-badge">PROCESSING</div>
+    </div>
+    <div class="prog-step-name" id="prog-step">Starting up...</div>
+    <div class="prog-track">
+      <div class="prog-fill" id="prog-fill" style="width:0%"></div>
+    </div>
+    <div class="steps">
+      <div class="step-pill" id="sp-0"><div class="dot"></div>CONVERT</div>
+      <div class="step-pill" id="sp-1"><div class="dot"></div>SLIDESHOW</div>
+      <div class="step-pill" id="sp-2"><div class="dot"></div>LAST FRAME</div>
+      <div class="step-pill" id="sp-3"><div class="dot"></div>BG REMOVE</div>
+      <div class="step-pill" id="sp-4"><div class="dot"></div>STICKER</div>
+      <div class="step-pill" id="sp-5"><div class="dot"></div>COMPOSE</div>
+    </div>
+    <div class="log-box" id="log-box"></div>
+  </div>
+
+  <!-- Result -->
+  <div id="result-wrap">
+    <div class="result-box">
+      <div class="result-title">🔥 YOUR VIDEO IS READY</div>
+      <div class="result-sub" id="result-sub">Generated by McBairan · @deep.build</div>
+      <video id="result-video" controls playsinline></video>
+      <div class="result-actions">
+        <a class="dl-btn" id="dl-btn" download>DOWNLOAD</a>
+        <button class="reset-btn" onclick="location.reload()">NEW VIDEO</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-name">McBAIRAN</div>
+  <div class="footer-links">
+    Built by <a href="https://instagram.com/deep.build" target="_blank">@deep.build</a>
+    &nbsp;·&nbsp;
+    <a href="https://github.com/YOUR_USERNAME/mcbairan" target="_blank">Source on GitHub</a>
+    &nbsp;·&nbsp;
+    Free forever
+  </div>
+</footer>
+
+<script>
+// ── Config ──────────────────────────────────────────────
+// Auto-detect: if frontend is served from same origin as backend, use that.
+// Otherwise user pastes their Render URL.
+let BACKEND = localStorage.getItem('mcbairan_backend') || '';
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (BACKEND) {
+    document.getElementById('server-url').value = BACKEND;
+    pingServer();
+  }
+});
+
+document.getElementById('server-url').addEventListener('change', e => {
+  BACKEND = e.target.value.trim().replace(/\/$/, '');
+  localStorage.setItem('mcbairan_backend', BACKEND);
+});
+
+async function pingServer() {
+  const url = (document.getElementById('server-url').value || '').trim().replace(/\/$/, '');
+  BACKEND = url;
+  localStorage.setItem('mcbairan_backend', url);
+  const el = document.getElementById('server-status');
+  el.textContent = 'PINGING...';
+  el.className = '';
+  try {
+    const r = await fetch(`${url}/api/health`, { signal: AbortSignal.timeout(5000) });
+    const d = await r.json();
+    el.textContent = '● CONNECTED';
+    el.className = 'ok';
+    checkReady();
+  } catch {
+    el.textContent = '✕ UNREACHABLE';
+    el.className = 'err';
+  }
+}
+
+// ── Files ────────────────────────────────────────────────
+let videoFile = null;
+let imageFiles = [];
+
+function setupDrop(dropId, inputId, onFiles) {
+  const drop = document.getElementById(dropId);
+  const input = document.getElementById(inputId);
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); onFiles(e.dataTransfer.files); });
+  input.addEventListener('change', () => onFiles(input.files));
+}
+
+setupDrop('video-drop', 'video-input', files => {
+  if (!files.length) return;
+  videoFile = files[0];
+  const tag = document.getElementById('video-tag');
+  tag.textContent = `✓ ${videoFile.name} (${(videoFile.size/1024/1024).toFixed(1)}MB)`;
+  tag.classList.add('show');
+  document.getElementById('video-drop').classList.add('has-file');
+  checkReady();
+});
+
+setupDrop('images-drop', 'images-input', files => {
+  imageFiles = [...imageFiles, ...Array.from(files)].slice(0, 50);
+  const tag = document.getElementById('images-tag');
+  tag.textContent = `✓ ${imageFiles.length} image${imageFiles.length !== 1 ? 's' : ''}`;
+  tag.classList.add('show');
+  document.getElementById('images-drop').classList.add('has-file');
+  renderThumbs();
+});
+
+function renderThumbs() {
+  const el = document.getElementById('img-thumbs');
+  el.innerHTML = '';
+  imageFiles.slice(0, 7).forEach(f => {
+    const img = document.createElement('img');
+    img.className = 'img-thumb';
+    img.src = URL.createObjectURL(f);
+    el.appendChild(img);
+  });
+  if (imageFiles.length > 7) {
+    const m = document.createElement('div');
+    m.className = 'img-count';
+    m.textContent = `+${imageFiles.length - 7}`;
+    el.appendChild(m);
+  }
+}
+
+function checkReady() {
+  const ok = videoFile && document.getElementById('server-status').classList.contains('ok');
+  document.getElementById('gen-btn').disabled = !ok;
+}
+
+// ── Job ───────────────────────────────────────────────────
+let jobId = null;
+let pollTimer = null;
+let lastLogLen = 0;
+
+async function startJob() {
+  if (!videoFile || !BACKEND) return;
+
+  document.getElementById('gen-btn').disabled = true;
+  document.getElementById('gen-btn').textContent = 'UPLOADING...';
+
+  const form = new FormData();
+  form.append('mainVideo', videoFile);
+  imageFiles.forEach(f => form.append('middleImages', f));
+
+  try {
+    const r = await fetch(`${BACKEND}/api/process`, { method: 'POST', body: form });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+    jobId = d.jobId;
+  } catch (e) {
+    alert('Failed to start: ' + e.message);
+    document.getElementById('gen-btn').disabled = false;
+    document.getElementById('gen-btn').textContent = 'MAKE THE MCBAIRAN EFFECT';
+    return;
+  }
+
+  document.getElementById('progress-wrap').classList.add('show');
+  document.getElementById('gen-btn').textContent = 'PROCESSING...';
+  lastLogLen = 0;
+  pollTimer = setInterval(poll, 1800);
+}
+
+const stepRanges = [
+  { id: 'sp-0', min: 0,  max: 12 },
+  { id: 'sp-1', min: 12, max: 27 },
+  { id: 'sp-2', min: 27, max: 44 },
+  { id: 'sp-3', min: 44, max: 63 },
+  { id: 'sp-4', min: 63, max: 78 },
+  { id: 'sp-5', min: 78, max: 100 },
+];
+
+async function poll() {
+  try {
+    const r = await fetch(`${BACKEND}/api/status/${jobId}`);
+    const job = await r.json();
+    updateUI(job);
+    if (job.status === 'done' || job.status === 'error') clearInterval(pollTimer);
+  } catch {}
+}
+
+function updateUI(job) {
+  const pct = job.progress || 0;
+  document.getElementById('prog-pct').textContent = `${pct}%`;
+  document.getElementById('prog-step').textContent = job.step || '...';
+  document.getElementById('prog-fill').style.width = `${pct}%`;
+  if (pct >= 100) document.getElementById('prog-fill').classList.add('done');
+
+  // Badge
+  const badge = document.getElementById('prog-badge');
+  badge.textContent = job.status.toUpperCase();
+  badge.className = `prog-badge ${job.status}`;
+
+  // Step pills
+  stepRanges.forEach(({ id, min, max }) => {
+    const el = document.getElementById(id);
+    el.classList.remove('active', 'done');
+    if (pct >= max) el.classList.add('done');
+    else if (pct >= min) el.classList.add('active');
+  });
+
+  // Logs
+  if (job.logs?.length > lastLogLen) {
+    const box = document.getElementById('log-box');
+    for (let i = lastLogLen; i < job.logs.length; i++) {
+      const t = job.logs[i];
+      const line = document.createElement('div');
+      line.className = 'log-line' +
+        (t.includes('✅') || t.includes('🎉') ? ' ok' :
+         t.includes('❌') ? ' err' :
+         (t.includes('🎬') || t.includes('🤖') || t.includes('Step')) ? ' warn' : '');
+      line.textContent = t;
+      box.appendChild(line);
+    }
+    box.scrollTop = box.scrollHeight;
+    lastLogLen = job.logs.length;
+  }
+
+  // Done
+  if (job.status === 'done' && job.resultUrl) {
+    document.getElementById('result-wrap').classList.add('show');
+    const videoUrl = `${BACKEND}${job.resultUrl}`;
+    document.getElementById('result-video').src = videoUrl;
+    const dl = document.getElementById('dl-btn');
+    dl.href = videoUrl;
+    dl.download = `mcbairan-${jobId}.mp4`;
+    document.getElementById('gen-btn').textContent = 'DONE ✓';
+  }
+
+  if (job.status === 'error') {
+    document.getElementById('prog-step').textContent = `ERROR: ${job.error}`;
+    document.getElementById('prog-step').style.color = 'var(--red)';
+    document.getElementById('gen-btn').textContent = 'MAKE THE MCBAIRAN EFFECT';
+    document.getElementById('gen-btn').disabled = false;
+  }
+}
+</script>
+
+</body>
+</html>
